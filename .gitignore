@@ -1,0 +1,7 @@
+Old/
+.ipynb_checkpoints/
+*.h5
+*.npy
+*.pyc
+*.spydata
+nohup.out
