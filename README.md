@@ -5,9 +5,9 @@ This repository contains the code used to create all the figures of our paper "A
 Code structure tries to follow the structure of the paper. Name of folders correspond to the name of sections of the paper, to the exception of '/MNIST toy example' which refers to Figure 1 presented in the Introduction.
 
 Files are in the parent folder if they are used in multiple sections:  
-The notebooks train_on_baseline_tasks and train_on_sot_tasks contain the code for training on the (C10-CNN1,C100-resnet,tiny-CNN) tasks and (C10-CNN2,C100-WRN) tasks respectively (cfr. Table 1 of the paper), which are used across multiple sections of our paper.
+The notebooks train_on_baseline_tasks and train_on_sot_tasks contain the code for training on the (C10-CNN1,C100-resnet,tiny-CNN) tasks and (C10-CNN2,C100-WRN) tasks respectively (cfr. Table 1 of the paper), which are used across multiple sections.
 
-import_task.py and models.py are used to load the data and the untrained models corresponding to the 5 tasks used in the paper.
+import_task.py and models.py are used to load the data and the untrained models corresponding to the 5 tasks used in the experiments.
 
 rotation_rate_utils.py contains the code for creating layer-wise angle deviation curves visualizations
 
