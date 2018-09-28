@@ -1,7 +1,17 @@
-# Layer-level-control-of-DNN-training
-This repository contains the code used to create all the figures of our paper "On layer-level control of DNN training and its impact on generalization", by Simon Carbonnelle and Christophe De Vleeschouwer ([arxiv link](https://arxiv.org/abs/1806.01603)).  
+# An experimental study of layer-level training speed and its impact on generalization
+This repository contains the code used to create all the figures of our paper "An experimental study of layer-level training speed and its impact on generalization", by Simon Carbonnelle and Christophe De Vleeschouwer, submitted at ICLR ([OpenReview link](https://openreview.net/forum?id=HkeILsRqFQ)).  
 
-Code is structured according to the paper: folders have the same naming as their corresponding section.  
+### Code structure
+Code structure tries to follow the structure of the paper. Name of folders correspond to the name of sections of the paper, to the exception of '/MNIST toy example' which refers to Figure 1 presented in the Introduction.
+
+Files are in the parent folder if they are used in multiple sections:  
+The notebooks train_on_baseline_tasks and train_on_sot_tasks contain the code for training on the (C10-CNN1,C100-resnet,tiny-CNN) tasks and (C10-CNN2,C100-WRN) tasks respectively (cfr. Table 1 of the paper), which are used across multiple sections of our paper.
+
+import_task.py and models.py are used to load the data and the untrained models corresponding to the 5 tasks used in the paper.
+
+rotation_rate_utils.py contains the code for creating layer-wise angle deviation curves visualizations
+
+layca_optimizers.py contains the code to apply Layca on SGD, Adam, RMSprop or Adagrad, and to use layer-wise learning rate multipliers when using SGD.
+
+### Libraries configuration
 Code was run with tensorflow-gpu 1.4.0 and keras 2.1.2
-
-The training, test and layer-wise angle deviation curves of all the models that we trained are also available in the pickle files (*.p). Don't hesitate to explore them as not everything is presented in our paper.
