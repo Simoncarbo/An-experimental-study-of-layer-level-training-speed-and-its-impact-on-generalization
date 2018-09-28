@@ -57,6 +57,7 @@ def import_cifar(dataset = 10):
 
 def lr_schedule(initial_lr,factor,epochs):
     '''
+    utility for creating a learning rate schedule that drops the learning rate by some factor at the specified epochs
     epoch indices starts at 0
     '''
     def schedule(epoch):

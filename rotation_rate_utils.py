@@ -1,3 +1,7 @@
+'''
+Utilities related to layer-wise angle deviation curves
+'''
+
 import numpy as np
 from scipy.spatial.distance import cosine
 
@@ -5,41 +9,30 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from keras.callbacks import Callback
+from keras.engine.training import _make_batches, _slice_arrays
+import keras.backend as K
+from keras.losses import categorical_crossentropy
 
-def get_kernel_layer_names(model, remove_skips = False):
+def get_kernel_layer_names(model):
     '''
-    collects name of all dense and conv2D layers of a model.
-    remove_skips allows to ignore conv2D layers used as skip connections in ResNets.
+    collects name of all layers of a model that contain a kernel in topological order (input layers first).
     '''
     layer_names = []
     for l in model.layers:
-        layer_class = type(l).__name__
-        if layer_class in ['Dense'] or  (layer_class in ['Conv2D'] and not remove_skips):
-            layer_names.append(l.name)
-        elif layer_class in ['Conv2D'] and remove_skips: # remove 1x1 conv layers that perform skip connections in WideResNet
-            if l.kernel_size != (1,1):
+        if len(l.weights) >0:
+            if 'kernel' in l.weights[0].name:
                 layer_names.append(l.name)
     return layer_names
 
-def get_learning_rate_multipliers(model,alpha = 0):
-    # get layer names in forward pass ordering (layers that are close to input go first)
-    layer_names = get_kernel_layer_names(model)
-    
-    if alpha>0.:
-        mult = (1-alpha)**(5/(len(layer_names)-1))
-        multipliers = dict(zip(layer_names,[mult**(len(layer_names)-1-i) for i in range(len(layer_names))]))
-    elif alpha<=0.:
-        mult = (alpha+1)**(5/(len(layer_names)-1))
-        multipliers = dict(zip(layer_names,[mult**i for i in range(len(layer_names))]))
-    
-    return multipliers
-
-def plot_parameter_distances(distances, ax = None):
+def plot_layerwise_angle_deviation_curves(deviations, ax = None):
     '''
     utility to plot the layer-wise angular distances between current parameters and initial parameters, as measured over training.
-    distances is a numpy array with epoch index in first axis, layer index in second axis
+    deviations is a list of lists with epoch index in first axis, layer index in second axis, 
+        containing the angle deviations for each layer as recorded over training
     '''
-    matplotlib.rcParams.update({'font.size': 20})
+    distances = np.array(deviations)
+    
+    #matplotlib.rcParams.update({'font.size': 20})
     
     # get one color per layer
     cm = plt.get_cmap('viridis')
@@ -63,33 +56,41 @@ def plot_parameter_distances(distances, ax = None):
     ax.set_ylabel('Cosine distance')
     #plt.tight_layout()
 
-def layerwise_parameter_distance(model, initial_w):
+def compute_layerwise_angle_deviation(current_model, initial_w):
     '''
     for each layer, computes cosine distance between current weights and initial weights
     initial_w is a list of tuples containing layer name and corresponding initial numpy weights
     '''
     s = []
     for l_name, w in initial_w:
-        s.append(cosine( model.get_layer(l_name).get_weights()[0].flatten(), w.flatten()))
+        s.append(cosine( current_model.get_layer(l_name).get_weights()[0].flatten(), w.flatten()))
     return s
 
-class LayerwiseParameterDistanceMemory(Callback):
+class LayerwiseAngleDeviationCurves(Callback):
     '''
     Computes and saves distance travelled by weights of each layer during training
     '''
-    def __init__(self, initial_w, batch_frequency):
+    def __init__(self, batch_frequency=np.inf):
         '''
-        initial_w is a list of tuples containing layer name and corresponding initial numpy weights
+        batch_frequency is the frequency at which the angle deviations are computed (minimum once per epoch)
         '''
         super().__init__()
         self.batch_frequency = batch_frequency
-        self.initial_w = initial_w
         
         self.memory = []
+    
+    def set_model(self,model):
+        super().set_model(model)
+        layer_names = get_kernel_layer_names(model) 
+        # initial_w is a list of tuples containing layer name and corresponding initial numpy weights
+        self.initial_w = list(zip(layer_names,[model.get_layer(l).get_weights()[0] for l in layer_names]))
         
     def on_batch_end(self, batch, logs=None):
-        if batch % self.batch_frequency == 0: #batch 0 is accepted, batch starts at 0 at every epoch
+        if batch % self.batch_frequency == 0: #batch 0 is accepted, batch resets at 0 at every epoch
 
-            dist = layerwise_parameter_distance(self.model, self.initial_w)
+            dist = compute_layerwise_angle_deviation(self.model, self.initial_w)
 
             self.memory.append(dist)
+    
+    def plot(self,ax = None):
+        plot_layerwise_angle_deviation_curves(self.memory,ax)
