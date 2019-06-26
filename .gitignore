@@ -4,4 +4,5 @@ Old/
 *.npy
 *.pyc
 *.spydata
+*.p
 nohup.out
